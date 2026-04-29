@@ -28,6 +28,19 @@
         "targets": "all",
         "icon": [
             "icons/logo.ico"
-        ]
+        ],
+        "windows": {
+            "nsis": {
+                "installMode": "both",
+                "displayLanguageSelector": false,
+                "languages": [
+                    "SimpChinese"
+                ],
+                "installerIcon": "icons/logo.ico"
+            },
+            "webviewInstallMode": {
+                "type": "offlineInstaller"
+            }
+        }
     }
 }

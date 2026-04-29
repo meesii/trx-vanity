@@ -93,6 +93,15 @@ struct WalletData {
     private_key: String,
 }
 
+/**
+ * 快速路径中间产物，仅包含地址字符串和原始私钥字节
+ * 避免在未匹配时执行 hex 编码
+ */
+struct RawWallet {
+    address: String,
+    secret_bytes: [u8; 32],
+}
+
 #[derive(Default)]
 struct MatchResult {
     matched_parts: Vec<String>,
@@ -207,6 +216,7 @@ fn generate_wallets_blocking(
     let found_count = Arc::new(AtomicU32::new(0));
     let matched_wallets: Arc<Mutex<Vec<WalletItem>>> = Arc::new(Mutex::new(Vec::new()));
     let pending_wallets: Arc<Mutex<Vec<WalletItem>>> = Arc::new(Mutex::new(Vec::new()));
+    let latest_addr: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
     let start_time = Instant::now();
     let label = rule_label(&config);
 
@@ -222,6 +232,7 @@ fn generate_wallets_blocking(
                 let found = found_count.clone();
                 let matched_w = matched_wallets.clone();
                 let pending_w = pending_wallets.clone();
+                let latest_a = latest_addr.clone();
                 let config = config.clone();
                 let label = label.clone();
 
@@ -235,34 +246,37 @@ fn generate_wallets_blocking(
                         }
 
                         let n = attempts.fetch_add(1, Ordering::Relaxed) + 1;
-                        let wallet_data = create_wallet();
-                        let match_result = find_matches(&wallet_data.address, &config);
+                        let mut raw = create_wallet_fast();
+                        let match_result = find_matches(&raw.address, &config);
                         let matched = !match_result.matched_parts.is_empty();
 
                         if matched {
                             found.fetch_add(1, Ordering::Relaxed);
-                        }
+                            let wallet_data = finalize_wallet(raw);
 
-                        let wallet = WalletItem {
-                            id: Uuid::new_v4().to_string(),
-                            address: wallet_data.address,
-                            private_key: wallet_data.private_key,
-                            rule_label: label.clone(),
-                            attempts: n,
-                            matched,
-                            matched_parts: match_result.matched_parts,
-                            matched_rules: match_result.matched_rules,
-                            created_at: Utc::now().to_rfc3339(),
-                        };
+                            let wallet = WalletItem {
+                                id: Uuid::new_v4().to_string(),
+                                address: wallet_data.address,
+                                private_key: wallet_data.private_key,
+                                rule_label: label.clone(),
+                                attempts: n,
+                                matched: true,
+                                matched_parts: match_result.matched_parts,
+                                matched_rules: match_result.matched_rules,
+                                created_at: Utc::now().to_rfc3339(),
+                            };
 
-                        if matched {
                             matched_w.lock().unwrap().push(wallet.clone());
+                            local_pending.push(wallet);
+                        } else {
+                            *latest_a.lock().unwrap() = Some(raw.address.clone());
+                            raw.secret_bytes.zeroize();
                         }
-
-                        local_pending.push(wallet);
 
                         if local_pending.len() >= 64 || last_push.elapsed() >= Duration::from_millis(100) || matched {
-                            pending_w.lock().unwrap().append(&mut local_pending);
+                            if !local_pending.is_empty() {
+                                pending_w.lock().unwrap().append(&mut local_pending);
+                            }
                             last_push = Instant::now();
                         }
 
@@ -298,7 +312,8 @@ fn generate_wallets_blocking(
                     let mut lock = pending_wallets.lock().unwrap();
                     lock.drain(..).collect()
                 };
-                let latest = batch.last().map(|w| w.address.clone());
+                let latest = batch.last().map(|w| w.address.clone())
+                    .or_else(|| latest_addr.lock().unwrap().clone());
                 let _ = emit_wallet_batch(&app, &batch);
                 let _ = emit_progress(&app, "running", cur_attempts, cur_found, config.target_count, start_time, latest);
                 last_emit = Instant::now();
@@ -341,27 +356,41 @@ fn generate_wallets_blocking(
     })
 }
 
-fn create_wallet() -> WalletData {
+/**
+ * 快速路径：只生成地址字符串，私钥保留为原始字节
+ * 栈上 25 字节数组替代 Vec 堆分配
+ */
+fn create_wallet_fast() -> RawWallet {
     let secret_key = SecretKey::random(&mut OsRng);
     let public_key = secret_key.public_key();
     let point = public_key.to_encoded_point(false);
     let public_bytes = point.as_bytes();
-    let mut private_bytes = secret_key.to_bytes();
+    let secret_bytes: [u8; 32] = secret_key.to_bytes().into();
 
     let hash = keccak256(&public_bytes[1..]);
-    let mut payload = Vec::with_capacity(25);
-    payload.push(0x41);
-    payload.extend_from_slice(&hash[12..]);
+    let mut payload = [0u8; 25];
+    payload[0] = 0x41;
+    payload[1..21].copy_from_slice(&hash[12..]);
 
-    let checksum = checksum(&payload);
-    payload.extend_from_slice(&checksum);
+    let check = checksum(&payload[..21]);
+    payload[21..25].copy_from_slice(&check);
 
-    let address = bs58::encode(payload).into_string();
-    let private_key = hex::encode(private_bytes);
-    private_bytes.zeroize();
+    let address = bs58::encode(&payload).into_string();
 
-    WalletData {
+    RawWallet {
         address,
+        secret_bytes,
+    }
+}
+
+/**
+ * 慢速路径：匹配成功后才将私钥编码为 hex
+ */
+fn finalize_wallet(mut raw: RawWallet) -> WalletData {
+    let private_key = hex::encode(raw.secret_bytes);
+    raw.secret_bytes.zeroize();
+    WalletData {
+        address: raw.address,
         private_key,
     }
 }
