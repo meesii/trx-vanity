@@ -1,0 +1,263 @@
+@import 'tailwindcss';
+@import './assets/fonts/MiSans/fonts.css';
+
+@font-face {
+    font-family: 'Exo 2';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap');
+}
+
+@theme {
+    --font-sans: 'Exo 2', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    --font-mono: 'Cascadia Mono', 'JetBrains Mono', Consolas, monospace;
+
+    --color-base: oklch(0.18 0.015 265);
+    --color-surface: oklch(0.22 0.015 265 / 0.75);
+    --color-surface-alt: oklch(0.28 0.012 265);
+    --color-border: oklch(0.5 0.03 260 / 0.3);
+    --color-border-dim: oklch(0.42 0.02 260 / 0.22);
+
+    --color-text: oklch(0.92 0.006 260);
+    --color-text-bright: oklch(0.97 0.003 260);
+    --color-text-muted: oklch(0.64 0.01 260);
+
+    --color-accent: oklch(0.68 0.14 250);
+    --color-accent-dim: oklch(0.68 0.14 250 / 0.12);
+    --color-accent-glow: oklch(0.68 0.14 250 / 0.25);
+
+    --color-hit: oklch(0.78 0.15 75);
+    --color-hit-bg: oklch(0.78 0.15 75 / 0.1);
+
+    --color-error: oklch(0.65 0.2 25);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+*::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+html,
+body,
+#app {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'MiSans', 'Microsoft YaHei', sans-serif, 'Hiragino Sans GB', 'Heiti SC', 'WenQuanYi Micro Hei', 'Arial', 'sans-serif';
+    color: var(--color-text);
+    background-color: oklch(0.16 0.02 265);
+    background-image:
+        radial-gradient(ellipse 80% 60% at 10% -10%, oklch(0.35 0.1 260 / 0.3), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 0%, oklch(0.3 0.08 290 / 0.25), transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 100%, oklch(0.25 0.06 250 / 0.18), transparent 60%),
+        linear-gradient(oklch(0.24 0.012 265 / 0.35) 1px, transparent 1px), linear-gradient(90deg, oklch(0.24 0.012 265 / 0.35) 1px, transparent 1px);
+    background-size:
+        100%,
+        100%,
+        100%,
+        60px 60px,
+        60px 60px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/**
+ * 矩阵雨列动画
+ */
+@keyframes rain_fall {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(calc(100vh + 40px));
+        opacity: 0;
+    }
+}
+
+/**
+ * 命中地址弹出动画
+ */
+@keyframes match_pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+        filter: blur(4px);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.02) translateY(-2px);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+}
+
+/**
+ * 脉冲光晕
+ */
+@keyframes pulse_glow {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 oklch(0.68 0.14 250 / 0);
+    }
+    50% {
+        box-shadow: 0 0 20px 4px oklch(0.68 0.14 250 / 0.15);
+    }
+}
+
+/**
+ * 地址逐字显现
+ */
+@keyframes type_reveal {
+    0% {
+        opacity: 0;
+        max-width: 0;
+    }
+    100% {
+        opacity: 1;
+        max-width: 100%;
+    }
+}
+
+/**
+ * 地址淡出
+ */
+@keyframes addr_fade {
+    0% {
+        opacity: 0.8;
+    }
+    70% {
+        opacity: 0.4;
+    }
+    100% {
+        opacity: 0.08;
+    }
+}
+
+/**
+ * 扫描线
+ */
+@keyframes scan_line {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+/**
+ * 数字滚动
+ */
+@keyframes digit_roll {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/**
+ * 流式列表过渡
+ */
+.stream-enter-active {
+    animation: match_pop 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stream-leave-active {
+    transition:
+        opacity 300ms ease-out,
+        transform 300ms ease-out;
+}
+
+.stream-leave-to {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.stream-move {
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/**
+ * Toast 消息提示过渡
+ */
+.toast-enter-active {
+    animation: toast_in 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-leave-active {
+    animation: toast_out 280ms ease-in forwards;
+}
+
+.toast-move {
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toast_in {
+    from {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toast_out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-60%) scale(0.9);
+    }
+}

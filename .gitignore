@@ -1,0 +1,22 @@
+# Logs
+logs
+*.log
+
+# Dependencies
+node_modules
+package-lock.json
+
+# Build output
+dist
+dist-ssr
+
+# Vite
+*.local
+
+# Rust / Tauri
+src-tauri/target
+src-tauri/gen/schemas
+
+# Hidden directories (dot folders)
+.*
+!.gitignore
