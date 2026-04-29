@@ -20,3 +20,6 @@ src-tauri/gen/schemas
 # Hidden directories (dot folders)
 .*
 !.gitignore
+!.github
+!.github/**
+.github/skills
