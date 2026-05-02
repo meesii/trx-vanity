@@ -1,13 +1,17 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "默认桌面窗口权限",
-  "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "core:event:default",
-    "core:event:allow-listen",
-    "core:webview:default",
-    "core:webview:allow-internal-toggle-devtools"
-  ]
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "默认桌面窗口权限",
+    "windows": [
+        "main"
+    ],
+    "permissions": [
+        "core:default",
+        "core:event:default",
+        "core:event:allow-listen",
+        "core:webview:default",
+        "core:webview:allow-internal-toggle-devtools",
+        "dialog:default",
+        "dialog:allow-save"
+    ]
 }

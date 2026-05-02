@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { save } from '@tauri-apps/plugin-dialog';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { toast } from './use_toast';
 
@@ -296,6 +297,16 @@ export function use_wallet() {
             await invoke('clear_wallets');
             history_list.value = [];
             toast.success('已清空所有记录');
+        },
+        async export_all() {
+            const path = await save({
+                title: '导出钱包记录',
+                defaultPath: 'wallets.txt',
+                filters: [{ name: 'Text', extensions: ['txt'] }],
+            });
+            if (!path) return;
+            const count = await invoke<number>('export_wallets', { path });
+            toast.success(`已导出 ${count} 条记录`);
         },
     };
 

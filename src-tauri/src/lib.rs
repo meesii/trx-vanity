@@ -184,8 +184,33 @@ fn clear_wallets(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn export_wallets(app: AppHandle, path: String) -> Result<u32, String> {
+    init_database(&app)?;
+    let conn = open_database(&app)?;
+    let mut stmt = conn
+        .prepare("SELECT address, private_key FROM wallets ORDER BY created_at DESC")
+        .map_err(|e| format!("查询失败：{e}"))?;
+    let rows: Vec<(String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .map_err(|e| format!("读取失败：{e}"))?
+        .filter_map(|r| r.ok())
+        .collect();
+    let count = rows.len() as u32;
+    let mut content = String::with_capacity(count as usize * 120);
+    for (addr, key) in &rows {
+        content.push_str(addr);
+        content.push_str("----");
+        content.push_str(key);
+        content.push('\n');
+    }
+    std::fs::write(&path, content).map_err(|e| format!("写入文件失败：{e}"))?;
+    Ok(count)
+}
+
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             stop_signal: Arc::new(AtomicBool::new(false)),
         })
@@ -196,7 +221,8 @@ pub fn run() {
             list_wallets,
             search_wallets,
             delete_wallet,
-            clear_wallets
+            clear_wallets,
+            export_wallets
         ])
         .run(tauri::generate_context!())
         .expect("启动 Tauri 应用失败");

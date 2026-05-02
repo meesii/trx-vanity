@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown, Clock, Copy, Play, Plus, QrCode, Search, Square, Trash2, X } from 'lucide-vue-next';
+import { ChevronDown, Clock, Copy, Download, Play, Plus, QrCode, Search, Square, Trash2, X } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { nextTick, ref, watch, type CSSProperties } from 'vue';
 import logoSvg from './assets/logo.svg';
@@ -380,13 +380,26 @@ const {
                             <p class="m-0 mb-2 text-[10px] font-semibold uppercase tracking-wider" style="color: oklch(0.55 0.12 145)">实时地址流</p>
                             <div class="matrix-viewport relative flex-1 min-h-0 overflow-hidden rounded-lg">
                                 <!-- CRT 扫描线纹理 -->
-                                <div class="pointer-events-none absolute inset-0 z-30 opacity-[0.03]" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, oklch(0.3 0 0) 2px, oklch(0.3 0 0) 4px)" />
+                                <div
+                                    class="pointer-events-none absolute inset-0 z-30 opacity-[0.03]"
+                                    style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, oklch(0.3 0 0) 2px, oklch(0.3 0 0) 4px)"
+                                />
                                 <!-- 顶部渐隐 -->
-                                <div class="pointer-events-none absolute inset-x-0 top-0 h-16 z-20" style="background: linear-gradient(to bottom, oklch(0.12 0.015 265) 0%, transparent 100%)" />
+                                <div
+                                    class="pointer-events-none absolute inset-x-0 top-0 h-16 z-20"
+                                    style="background: linear-gradient(to bottom, oklch(0.12 0.015 265) 0%, transparent 100%)"
+                                />
                                 <!-- 底部渐隐 -->
-                                <div class="pointer-events-none absolute inset-x-0 bottom-0 h-10 z-20" style="background: linear-gradient(to top, oklch(0.12 0.015 265) 0%, transparent 100%)" />
+                                <div
+                                    class="pointer-events-none absolute inset-x-0 bottom-0 h-10 z-20"
+                                    style="background: linear-gradient(to top, oklch(0.12 0.015 265) 0%, transparent 100%)"
+                                />
                                 <!-- 地址列表 -->
-                                <TransitionGroup name="matrix" tag="div" class="matrix-track flex flex-col-reverse gap-px p-2 h-full overflow-hidden justify-start">
+                                <TransitionGroup
+                                    name="matrix"
+                                    tag="div"
+                                    class="matrix-track flex flex-col-reverse gap-px p-2 h-full overflow-hidden justify-start"
+                                >
                                     <div
                                         v-for="(item, idx) in stream_list.slice(0, 20)"
                                         :key="item.id"
@@ -407,7 +420,11 @@ const {
                                     </div>
                                 </TransitionGroup>
                             </div>
-                            <div v-if="!stream_list.length && !matched_list.length" class="flex items-center justify-center h-full text-sm" style="color: oklch(0.4 0.06 145 / 0.5)">
+                            <div
+                                v-if="!stream_list.length && !matched_list.length"
+                                class="flex items-center justify-center h-full text-sm"
+                                style="color: oklch(0.4 0.06 145 / 0.5)"
+                            >
                                 点击「开始生成」启动地址生成
                             </div>
                         </div>
@@ -428,7 +445,14 @@ const {
                         <!-- 弹窗头 -->
                         <div class="flex justify-between items-center px-5 py-3 border-b border-border-dim shrink-0">
                             <h2 class="m-0 text-[16px] font-semibold text-text-bright">历史记录</h2>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-2">
+                                <button
+                                    class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] leading-none font-medium bg-transparent border border-accent/30 text-accent/70 cursor-pointer transition-colors hover:bg-accent/10 hover:text-accent"
+                                    @click="history.export_all"
+                                >
+                                    <Download :size="12" />
+                                    导出全部
+                                </button>
                                 <button
                                     class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] leading-none font-medium bg-transparent border border-error/30 text-error/70 cursor-pointer transition-colors hover:bg-error/10 hover:text-error"
                                     @click="history.clear_all"
