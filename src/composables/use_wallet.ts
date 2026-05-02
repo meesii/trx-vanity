@@ -320,6 +320,17 @@ export function use_wallet() {
             }));
             stream_list.value = [...sample, ...stream_list.value].slice(0, 30);
         },
+        push_latest(address: string) {
+            if (stream_list.value[0]?.address === address) return;
+            const now = Date.now();
+            const item: StreamItem = {
+                id: `latest-${now}-${address}`,
+                address,
+                matched: false,
+                matched_parts: [],
+            };
+            stream_list.value = [item, ...stream_list.value].slice(0, 30);
+        },
         highlight(address: string, parts: string[]) {
             if (!parts.length) return [{ text: address, hl: false }];
             const sorted = [...parts].sort((a, b) => b.length - a.length);
@@ -361,6 +372,9 @@ export function use_wallet() {
         });
         unlisten_progress = await listen<ProgressEvent>('wallet_progress', (event) => {
             Object.assign(progress, event.payload);
+            if (event.payload.latest_address) {
+                stream.push_latest(event.payload.latest_address);
+            }
             if (event.payload.status !== 'running') {
                 is_running.value = false;
             }

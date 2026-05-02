@@ -378,10 +378,10 @@ const {
                         <!-- 地址流 -->
                         <div class="flex-1 min-h-0 p-3 overflow-hidden">
                             <p class="m-0 mb-2 text-[10px] font-semibold text-text-muted uppercase tracking-wider">实时地址流</p>
-                            <div class="relative flex flex-col gap-px overflow-y-auto max-h-full">
+                            <div class="relative flex flex-col gap-px overflow-hidden max-h-full">
                                 <TransitionGroup name="stream" tag="div" class="flex flex-col gap-px">
                                     <div
-                                        v-for="(item, idx) in stream_list"
+                                        v-for="(item, idx) in stream_list.slice(0, 24)"
                                         :key="item.id"
                                         class="flex items-center h-5.5 px-2 rounded-sm text-[11.5px] font-mono transition-opacity duration-500"
                                         :style="{ opacity: Math.max(0.08, 1 - idx * 0.06) }"
