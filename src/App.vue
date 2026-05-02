@@ -375,25 +375,39 @@ const {
                             </TransitionGroup>
                         </div>
 
-                        <!-- 地址流 -->
-                        <div class="flex-1 min-h-0 p-3 overflow-hidden">
-                            <p class="m-0 mb-2 text-[10px] font-semibold text-text-muted uppercase tracking-wider">实时地址流</p>
-                            <div class="relative flex flex-col gap-px overflow-hidden max-h-full">
-                                <TransitionGroup name="stream" tag="div" class="flex flex-col gap-px">
+                        <!-- 地址流 — Matrix 瀑布流 -->
+                        <div class="flex-1 min-h-0 p-3 overflow-hidden flex flex-col">
+                            <p class="m-0 mb-2 text-[10px] font-semibold uppercase tracking-wider" style="color: oklch(0.55 0.12 145)">实时地址流</p>
+                            <div class="matrix-viewport relative flex-1 min-h-0 overflow-hidden rounded-lg">
+                                <!-- CRT 扫描线纹理 -->
+                                <div class="pointer-events-none absolute inset-0 z-30 opacity-[0.03]" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, oklch(0.3 0 0) 2px, oklch(0.3 0 0) 4px)" />
+                                <!-- 顶部渐隐 -->
+                                <div class="pointer-events-none absolute inset-x-0 top-0 h-16 z-20" style="background: linear-gradient(to bottom, oklch(0.12 0.015 265) 0%, transparent 100%)" />
+                                <!-- 底部渐隐 -->
+                                <div class="pointer-events-none absolute inset-x-0 bottom-0 h-10 z-20" style="background: linear-gradient(to top, oklch(0.12 0.015 265) 0%, transparent 100%)" />
+                                <!-- 地址列表 -->
+                                <TransitionGroup name="matrix" tag="div" class="matrix-track flex flex-col-reverse gap-px p-2 h-full overflow-hidden justify-start">
                                     <div
-                                        v-for="(item, idx) in stream_list.slice(0, 24)"
+                                        v-for="(item, idx) in stream_list.slice(0, 20)"
                                         :key="item.id"
-                                        class="flex items-center h-5.5 px-2 rounded-sm text-[11.5px] font-mono transition-opacity duration-500"
-                                        :style="{ opacity: Math.max(0.08, 1 - idx * 0.06) }"
-                                        :class="item.matched ? 'text-accent bg-accent-dim' : 'text-text-muted'"
+                                        class="matrix-row flex items-center h-7 shrink-0 px-2 rounded-sm font-mono text-[14px] leading-none whitespace-nowrap"
+                                        :style="{ opacity: Math.max(0.06, 1 - idx * 0.055) }"
+                                        :class="[
+                                            item.matched ? 'matrix-hit' : '',
+                                            item.decoded < item.address.length ? 'matrix-decoding' : '',
+                                            idx === 0 ? 'matrix-latest' : '',
+                                        ]"
                                     >
-                                        <template v-for="(chunk, ci) in stream.highlight(item.address, item.matched_parts)" :key="ci">
-                                            <span :class="chunk.hl ? 'text-hit font-semibold' : ''">{{ chunk.text }}</span>
+                                        <span v-if="item.decoded < item.address.length" class="matrix-scramble">{{ stream.decode_text(item) }}</span>
+                                        <template v-else>
+                                            <template v-for="(chunk, ci) in stream.highlight(item.address, item.matched_parts)" :key="ci">
+                                                <span :class="chunk.hl ? 'matrix-hl' : ''">{{ chunk.text }}</span>
+                                            </template>
                                         </template>
                                     </div>
                                 </TransitionGroup>
                             </div>
-                            <div v-if="!stream_list.length && !matched_list.length" class="flex items-center justify-center h-full text-sm text-text-muted/40">
+                            <div v-if="!stream_list.length && !matched_list.length" class="flex items-center justify-center h-full text-sm" style="color: oklch(0.4 0.06 145 / 0.5)">
                                 点击「开始生成」启动地址生成
                             </div>
                         </div>

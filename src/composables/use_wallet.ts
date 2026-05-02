@@ -49,6 +49,10 @@ export interface StreamItem {
     address: string;
     matched: boolean;
     matched_parts: string[];
+    /**
+     * 解码进度：已揭示的字符数，等于 address.length 时解码完成
+     */
+    decoded: number;
 }
 
 export interface PatternOption {
@@ -307,6 +311,7 @@ export function use_wallet() {
                     address: w.address,
                     matched: w.matched,
                     matched_parts: w.matched_parts,
+                    decoded: w.address.length,
                 };
                 if (w.matched) {
                     matched_list.value = [item, ...matched_list.value].slice(0, 20);
@@ -317,8 +322,10 @@ export function use_wallet() {
                 address: w.address,
                 matched: w.matched,
                 matched_parts: w.matched_parts,
+                decoded: 0,
             }));
             stream_list.value = [...sample, ...stream_list.value].slice(0, 30);
+            stream.run_decode();
         },
         push_latest(address: string) {
             if (stream_list.value[0]?.address === address) return;
@@ -328,8 +335,44 @@ export function use_wallet() {
                 address,
                 matched: false,
                 matched_parts: [],
+                decoded: 0,
             };
             stream_list.value = [item, ...stream_list.value].slice(0, 30);
+            stream.run_decode();
+        },
+        /** @private 解码动画帧 ID */
+        _raf: 0 as number,
+        /** @private 乱码字符池 */
+        _glyphs: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789',
+        run_decode() {
+            if (stream._raf) return;
+            const tick = () => {
+                let pending = false;
+                const list = stream_list.value;
+                for (const item of list) {
+                    if (item.decoded < item.address.length) {
+                        item.decoded = Math.min(item.decoded + 3, item.address.length);
+                        pending = true;
+                    }
+                }
+                if (pending) {
+                    stream_list.value = [...list];
+                    stream._raf = requestAnimationFrame(tick);
+                } else {
+                    stream._raf = 0;
+                }
+            };
+            stream._raf = requestAnimationFrame(tick);
+        },
+        decode_text(item: StreamItem): string {
+            if (item.decoded >= item.address.length) return item.address;
+            const revealed = item.address.slice(0, item.decoded);
+            const remaining = item.address.length - item.decoded;
+            let scrambled = '';
+            for (let i = 0; i < remaining; i++) {
+                scrambled += stream._glyphs[Math.floor(Math.random() * stream._glyphs.length)];
+            }
+            return revealed + scrambled;
         },
         highlight(address: string, parts: string[]) {
             if (!parts.length) return [{ text: address, hl: false }];
